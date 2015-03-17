@@ -77,9 +77,9 @@ var y = d3.scale.linear()
 var color = d3.scale.category20c();
 var used_ids = d3.set();
 
-var minimum_pixels_for_display_stack = 12;
+var minimum_pixels_for_display_stack = 15;
 var minimum_value_for_display_stack = 0; // Set once scale is set
-var minimum_pixels_for_display_brick = 3;
+var minimum_pixels_for_display_brick = 2;
 var minimum_value_for_display_brick = 0; // Set once scale is set
 
 var yAxis = d3.svg.axis()
@@ -122,6 +122,20 @@ svg.append("text")
   .attr("text-anchor", "middle")
   .attr("y", 15)
   .text("Cost of Low Carbon scenario");
+
+svg.append("text")
+  .attr("class", "stacklabel")
+  .attr("id","decreaselabel")
+  .attr("text-anchor", "middle")
+  .attr("y", 55)
+  .text("Reduce these costs");
+
+svg.append("text")
+  .attr("class", "stacklabel")
+  .attr("id","increaselabel")
+  .attr("text-anchor", "middle")
+  .attr("y", 55)
+  .text("Increase these costs");
 
 svg.append("text")
   .attr("class", "stacklabel")
@@ -175,9 +189,9 @@ var data_loaded = function(parsed_tsv, error) {
   }
 
   if(a_positive_total > b_positive_total) {
-    y_domain[1] = a_positive_total + diff_positive_total;
+    y_domain[1] = a_positive_total;
   } else {
-    y_domain[1] = b_positive_total + diff_positive_total;
+    y_domain[1] = b_positive_total;
   }
   
   // Set the y_domain of the y to cover the full data range
@@ -241,8 +255,10 @@ var replace_with_other = function(data, threshold, parameter) {
 var position_data = function() {
   stack('ln', data.a_negative, 'a', 0, 0, 0); // Down
   stack('lp', data.a_positive, 'a', a_negative_total, 1, 0); // Up
-  stack('dp', data.diff_positive, 'diff', a_negative_total + a_positive_total, 3, 1); // Up
-  stack('dn', data.diff_negative.reverse(), 'diff', a_negative_total + a_positive_total + diff_positive_total, 3 + data.diff_positive.length + 1, 1); // Down
+  stack('dn', data.diff_negative.reverse(), 'diff', a_negative_total + a_positive_total, 3, 1); // Down
+  stack('dp', data.diff_positive, 'diff', a_negative_total + a_positive_total + diff_negative_total, 3 + data.diff_negative.length + 1, 1); // Up
+  //stack('dp', data.diff_positive, 'diff', a_negative_total + a_positive_total, 3, 1); // Up
+  //stack('dn', data.diff_negative.reverse(), 'diff', a_negative_total + a_positive_total + diff_positive_total, 3 + data.diff_positive.length + 1, 1); // Down
   stack('rp', data.b_positive, 'b', b_negative_total, 3 + data.diff_positive.length + 1 + data.diff_negative.length + 1 , 0); // Down
   stack('rn', data.b_negative, 'b', 0, 3 + data.diff_positive.length + 1 + data.diff_negative.length + 1 + 1, 0); // Up
 }
@@ -273,7 +289,7 @@ var stack = function(type, data, parameter, y_start, x_start, x_inc) {
 }
 
 var draw = function() {
-  var label_y = height, minimum_label_y_spacing = 16, lines, bricks, all_data, labels;
+  var label_y = 0, minimum_label_y_spacing = 10, lines, bricks, all_data, labels;
 
   all_data = [].concat(data.a_negative, data.a_positive, data.diff_positive, data.diff_negative, data.b_positive, data.b_negative);
 
@@ -309,46 +325,45 @@ var draw = function() {
     .attr("class", function(d) { return "label "+d.type+" "+d.css; })
     .attr("dy", '0.3em');
 
-  svg.selectAll(".label.ln, .label.lp, .label.dp")
+  svg.selectAll(".label.ln, .label.lp, .label.dn")
     .attr("text-anchor", "end");
 
-  svg.selectAll(".label.ln, .label.lp, .label.dp")
+  svg.selectAll(".label.ln, .label.lp")
     .attr("dx", -1);
 
-  svg.selectAll(".label.rn, .label.rp, .label.dn")
+  svg.selectAll(".label.dn, .label.dp")
+    .attr("dx", x.rangeBand()/2);
+
+  svg.selectAll(".label.rn, .label.rp")
     .attr("dx", x.rangeBand()+1);
 
   labels.attr("x", function(d) { return x(d.x);  });
   labels.attr("y", function(d) { return y((d.y0+d.y1)/2);  });
 
-  svg.selectAll(".label.dp, .label.dn").attr("y", function(d) { return y(d.y1)-8; });
-  svg.selectAll(".dp, .dn").attr("y", function(d) { return y(d.y1)-8; });
-
-
   svg.selectAll(".label.dp")
-    .sort(function(a,b) { return a.y1 - b.y1; })
+    .sort(function(a,b) { return b.y0 - a.y0; })
     .attr("y", function(d) {
-      var desired_y = y(d.y1)-8;
-      var minimum_y = label_y - minimum_label_y_spacing;
-      if(minimum_y < desired_y) {
+      var desired_y = y(d.y0)+6;
+      var minimum_y = label_y + minimum_label_y_spacing;
+      if(minimum_y > desired_y) {
         desired_y = minimum_y;
-        label_y = label_y - minimum_label_y_spacing;
+        label_y = label_y + minimum_label_y_spacing;
       } else {
         label_y = desired_y;
       }
       return desired_y;
       });
 
-  label_y = height;
+  label_y = 0;
 
   svg.selectAll(".label.dn")
-    .sort(function(a,b) { return a.y1 - b.y1; })
+    .sort(function(a,b) { return b.y1 - a.y1; })
     .attr("y", function(d) {
-      var desired_y = y(d.y1)-8;
-      var minimum_y = label_y - minimum_label_y_spacing;
-      if(minimum_y < desired_y) {
+      var desired_y = y(d.y0)+6;
+      var minimum_y = label_y + minimum_label_y_spacing;
+      if(minimum_y > desired_y) {
         desired_y = minimum_y;
-        label_y = label_y - minimum_label_y_spacing;
+        label_y = label_y + minimum_label_y_spacing;
       } else {
         label_y = desired_y;
       }
@@ -389,7 +404,7 @@ var draw = function() {
 
   lines
     .attr('x1', function(d) { return x(1); })
-    .attr('x2', function(d) { return x(2)+x.rangeBand(); })
+    .attr('x2', function(d) { return x(3)+x.rangeBand(); })
     .attr('y1', function(d) { return y(a_negative_total + a_positive_total); })
     .attr('y2', function(d) { return y(a_negative_total + a_positive_total); });
 
@@ -400,22 +415,10 @@ var draw = function() {
   lines.exit().remove();
 
   lines
-    .attr('x1', function(d) { return x(number_of_columns-3); })
+    .attr('x1', function(d) { return x(number_of_columns-4); })
     .attr('x2', function(d) { return x(number_of_columns-2)+x.rangeBand(); })
     .attr('y1', function(d) { return y(b_negative_total + b_positive_total); })
     .attr('y2', function(d) { return y(b_negative_total + b_positive_total); });
-
-  lines = svg.selectAll("line.connector.diff").data([1]);
-
-  lines.enter().append("line").attr("class", "connector diff");
-
-  lines.exit().remove();
-
-  lines
-    .attr('x1', function(d) { return x(2 + data.diff_positive.length); })
-    .attr('x2', function(d) { return x(2 + data.diff_positive.length+2)+x.rangeBand(); })
-    .attr('y1', function(d) { return y(a_negative_total + a_positive_total + diff_positive_total); })
-    .attr('y2', function(d) { return y(a_negative_total + a_positive_total + diff_positive_total); });
 
   lines = svg.selectAll("line.connector.left").data([1]);
 
@@ -448,6 +451,15 @@ var draw = function() {
   d3.select('#rightlabel')
     .attr("x", (x(number_of_columns-2)+width)/2);
 
+  d3.select('#decreaselabel')
+    .attr("x", x(Math.ceil((4+data.diff_negative.length)/2)))
+    .attr("y", y(a_negative_total + a_positive_total)-20);
+
+
+  d3.select('#increaselabel')
+    .attr("x", x(Math.ceil(((number_of_columns-4)+(number_of_columns-4-data.diff_negative.length))/2)))
+    .attr("y", y(b_negative_total + b_positive_total)-20);
+
   svg.select("#backingleft")
     .attr("x", 5)
     .attr("width", x(2)+5)
@@ -464,7 +476,7 @@ var draw = function() {
     .attr("x", x(3)-5)
     .attr("width", x(number_of_columns-3)-x(3)+5)
     .attr("y", 0)
-    .attr("height", y(Math.min(a_negative_total + a_positive_total, b_negative_total + b_positive_total))+5);
+    .attr("height", y(a_negative_total + a_positive_total + diff_negative_total)+50);
 
 
 }
