@@ -1,0 +1,1459 @@
+<html>
+  <meta charset='utf-8'>
+  <script src="d3.min.js"></script>
+  <style>
+body {
+}
+
+  .axis path, .axis line {
+    fill: none;
+    stroke: #000;
+    shape-rendering: crispEdges;
+  }
+    
+  rect.brick {
+    stroke: #fff;
+    shape-rendering: crispEdges;
+  }
+
+  text.ld, text.lu {
+  }
+
+  text.stacklabel {
+    font-weight: bold;
+  }
+
+  text.label {
+    font-size: 10px;
+  }
+
+  line.connector {
+    stroke: #000;
+    fill: none;
+    shape-rendering: crispEdges;
+    stroke-thickness: 1px;
+  }
+
+  #backing rect {
+    fill: #eef;
+    fill-opacity: 0.5;
+    stroke: none;
+  }
+  
+  #tsv {
+    width: 97%;
+    height: 200px;
+  }
+
+  </style>
+  <title>Flying bricks</title>
+  <body>
+  <div id='input'>
+    <h1>"Flying Brick" chart drawing</h1>
+    <p>
+      Paste tab separated data in as "<code>Item [TAB] Value in scenario A [TAB] value in scenario B [NEWLINE]</code>". 
+      There shouldn't be a header row. Tab separated data is what you get if you copy and paste from Excel.
+    </p>
+    <textarea id='tsv'>
+Residential computers	601535 	601535 
+Commercial computers	573428 	573428 
+New hybrid petrol car	387146 	392433 
+IMPOILCRD2	203286 	221275 
+TCFCHBHYG01	228745 	184434 
+TCPET01	151239 	174655 
+TBDST01	142305 	142305 
+REAUDVIS01	136923 	136923 
+New Nuclear (PWR EPR variant)	125610 	106884 
+IMPOILCRD1-E	94493 	96859 
+Light truck petrol hybrid	28543 	154645 
+IMPNGA-N	90888 	90888 
+TAIJETN01	86002 	86002 
+Light truck. Plug in hybrid? Petrol?	135984 	31336 
+Heavy truck. Hydrogen Fuel Cell. Hybrid?!	108096 	51268 
+Heavy truck. New? Diesel?	46023 	90277 
+TLFCHBHYG01	55712 	59230 
+Natural gas (domestic)	47886 	63515 
+Light truck. Petrol.	66604 	37211 
+Car. Petrol. Existing.	48865 	48865 
+TLELC01	64978 	31900 
+Natural gas (from Netherlands or Belgium)	55823 	40311 
+Liquified natural gas	46909 	46909 
+IMPHYL	36851 	36511 
+RHEBLCRG01	34213 	38385 
+TCHBDST01	17604 	53056 
+REWETALL01	31662 	31662 
+TCDST00	30671 	30671 
+IMPOILJET	30163 	28725 
+TAIJETE01	26676 	26676 
+SREFEHFO01	24826 	26168 
+TLDST00	24430 	24430 
+RHEAHBRE01	29364 	18352 
+RHERAD01	22439 	22574 
+EBIOQ01	23655 	12867 
+MINOILCRD4	17622 	17622 
+RHNAHPRE01	23422 	11056 
+ETNM01	18208 	15893 
+SCKNGA001	15464 	15464 
+MINNGA4	15388 	15388 
+TLDST01		30315 
+PHYGNGALQ01	16540 	10826 
+RDISTELC01	13923 	11917 
+RHNBLCRG01	10656 	14978 
+MINOILCRD5	12234 	12562 
+RHNRAD01	12200 	12247 
+TCDST01	24266 	
+POILREF02	12331 	11600 
+RHERAD00	11698 	11698 
+SDH-SWHS01	15533 	7297 
+RHEAHPRE01	11836 	10676 
+RCHGHOB01	9802 	11625 
+MINNGA5	10282 	10282 
+RCHGOVEN01	8480 	10463 
+PPELHWOD01	11666 	6910 
+SHLDRAD01	9082 	9082 
+IMPOILMSC	7511 	10366 
+SDISTELC01	8628 	8368 
+MINNGASHL1	6611 	9772 
+THDST00	8109 	8109 
+RECOLREF02	8043 	7474 
+MINOILCRD1	7407 	7407 
+SHHA-CAE01	7306 	7365 
+MINNGA7	4089 	10137 
+TWPET01	7877 	6323 
+MINOILCRD3	6815 	6815 
+CCSPIP01	7843 	4987 
+RSERVPGAS00	6345 	6345 
+EWNDOFF201	6284 	6284 
+MINOILCRD7	6151 	6151 
+TADJETE01	6024 	6024 
+RMAINPGAS00	6008 	6008 
+MINOILCRD2	5938 	5935 
+IMPBWOD	6609 	4700 
+IMPCOA-E	5263 	5626 
+RCHEOVEN01	6362 	4504 
+RHENSTRE01	6323 	4287 
+RHEBLRRG00	5217 	5217 
+TRELC01	5237 	4771 
+IDISTELC01	4665 	4758 
+TAIJETN00	4622 	4622 
+RCHEHOB01	5708 	3336 
+PURN04501	4650 	4302 
+PURN04500	4784 	3916 
+MINNGA8	714 	7678 
+MINCOA1	3756 	4034 
+IMPCOACOK	3827 	3850 
+RHNBLCRH01	3065 	4570 
+TBDST00	3760 	3760 
+MINNGA3	3696 	3696 
+PPELLBIOS01	4984 	2289 
+EBOG-LFE01	3579 	3227 
+IPPFINPRO01	3291 	3291 
+PHTANKER01	3377 	3189 
+EHYGOCT01	3874 	2617 
+IMPETH	3198 	3250 
+RHEBLCRH01	3345 	3016 
+IMPOILDST	3171 	3171 
+UNGAPTR00	3048 	3048 
+MINNGA1	3000 	2993 
+MINNGA2	2947 	2927 
+TADJETN01	2910 	2910 
+PHPIPEDIST01	3453 	2339 
+RHEBLCRG00	2733 	2733 
+RECOLREF01	2463 	2974 
+SHLBLCRG01	2638 	2770 
+SCKLFO001	2683 	2683 
+POILREF00	2422 	2936 
+IMPCOA	2015 	3157 
+TFSSHYGL01	2653 	2501 
+IMPOILCRD1	2564 	2564 
+RMETERELC01	2737 	2343 
+IMAINPGAS00	2507 	2507 
+IMPURN	2426 	2113 
+MINOILCRD8	1561 	2747 
+SHLAHPRE01	2785 	1484 
+RCEOTHER01	2112 	2112 
+INDNEULPG01	2059 	2156 
+REWETALL00	2092 	2092 
+ENGACCT00	2070 	2066 
+RHNNSTRE01	2451 	1614 
+RHESHTRG01	1069 	2983 
+ICHHVCSCE01	1248 	2782 
+PHYGEYSL01	2294 	1711 
+ENGACCTQ01	1305 	2538 
+PWLFMSWORG01	1901 	1901 
+ECOA00	1888 	1900 
+TRAPET01	1740 	1993 
+EWNDONS00	1848 	1848 
+RSERVPHYG01	1886 	1743 
+RECOLFRE02	1390 	2120 
+RELITLED01	1717 	1717 
+ETNM00	1714 	1714 
+IMPOILPET	1886 	1525 
+IMPBIOOIL	3324 	
+ICMKLND01	1656 	1656 
+ENUCAGRO00	1646 	1646 
+EWNDOFF00	1631 	1631 
+EWNDONS401	2242 	1004 
+ENUCAGRN00	1622 	1622 
+RHCSVCAV02	1744 	1454 
+IMPOILLPG	2167 	909 
+RHEBLRRW01	1986 	1085 
+EHYGCCT01	1213 	1836 
+IPPPRODRY03	1889 	1118 
+SMAINPGAS00	1495 	1495 
+TAIJETE00	1434 	1434 
+RCHHHOB01	1073 	1781 
+TRAJETIA01	1423 	1423 
+SREFEHFC00	1348 	1348 
+TLPET00	1306 	1306 
+ULNGT00	1302 	1302 
+TFSLHYGIS01	1476 	1103 
+ECOABIO00	1254 	1283 
+RMAINPHYG01	1311 	1211 
+RHEBLCRO01		2489 
+RDISTELC00	1209 	1209 
+RECOLFRE01	1517 	899 
+PCOK01	1183 	1183 
+TFSSCELC01	1709 	608 
+SHHBLRRG01	945 	1366 
+SHLBLRRE01	1077 	1184 
+PWLFMSWBIO01	1143 	1034 
+EWNDONS301	1093 	1037 
+RHEDHP401	1159 	970 
+IDISTELC00	1063 	1063 
+PCHP-CCP01	975 	1112 
+PHPIPETRAN01	1226 	858 
+TDISTELC01	1416 	618 
+IMPAGWST	1897 	113 
+MINBSTWWST1	1299 	699 
+SDISTELC00	990 	990 
+IPPPROOTH01	972 	972 
+IPPPROPRS01	972 	972 
+SHHVACAE02	974 	962 
+TWFCHYG01		1900 
+EMANOCT01	942 	949 
+IMPOILHFO	938 	938 
+IMPELC-EU	1017 	833 
+RHEBLRRO00	906 	906 
+PBOGMSWBIO01	898 	908 
+PHYGWSTQ01	1336 	464 
+TFSSHYG01	1295 	499 
+EHYD00	894 	894 
+EGEO01	1182 	600 
+RELITENS01	838 	838 
+SLOFELED01	836 	836 
+SMAINPHYG01	902 	762 
+ENGACCTRR01	48 	1596 
+IISCASHRM02	808 	808 
+RESWODL01	1040 	573 
+AHTBLRB01	455 	1138 
+TRADST01	684 	908 
+RESPELH01	313 	1238 
+SHLBLCRO01	553 	995 
+EWNDONS201	780 	741 
+RCHEOVEN00	752 	752 
+ENUCPWR00	741 	741 
+RECOLREF00	739 	739 
+ICHHVCSCQN01	1124 	339 
+PWLFMSWINO01	727 	727 
+PCOK00	725 	725 
+PHYGSTOS01	820 	624 
+RCHGHOB00	708 	708 
+IMPOILKER	738 	665 
+RHENSTRE00	690 	690 
+SCSVROFF01	655 	655 
+RHCSVLOF01	652 	652 
+ICMGRIMIX02	646 	652 
+TWPET00	629 	629 
+ICMKLNPCQR01	1247 	
+MINBWOD2	663 	577 
+TFSLHYGDS01	762 	471 
+SREFEHFC01	1220 	
+ENGAOCT01	594 	594 
+ICHHVCSCQH01	808 	378 
+RMETERELC00	592 	592 
+IPPPRODRY01	239 	934 
+IPPFINPRO00	571 	571 
+IMAINPHYG01	618 	518 
+EMSW00	538 	588 
+SHHBLRRH01	594 	502 
+RCHEHOB00	537 	537 
+RDH-SWHSE01	546 	514 
+RHNSHTRG01	227 	814 
+IISELAFUR02	513 	513 
+SLOTELED01	498 	498 
+EHYDPMP00	493 	493 
+SCKELC000	488 	488 
+SCKNGA000	481 	481 
+PBOG-SW01	480 	481 
+CCSSNS01	587 	371 
+PHYGBPELQ01	654 	303 
+TFSSPET01	423 	521 
+ICMKLND02	495 	434 
+RHEBLCRO00	458 	458 
+SCSVROFP01	459 	453 
+EBOG-LFE00	448 	448 
+PHYGNGAL01	838 	58 
+RDH-SWHSN01	428 	462 
+TADJETE00	441 	441 
+PBSTWWSTTRT01	678 	204 
+SWHBLRRG01	308 	567 
+IMPOILLFO	436 	436 
+SLOFEFLU01	435 	435 
+RHCSVCAV01	425 	425 
+IISBOXFUR01	421 	421 
+SHLDRAD00	420 	420 
+RHEDHP101	446 	393 
+IMPBIODST	418 	418 
+SSERVPGAS00	414 	414 
+SHHA-CAE00	413 	413 
+RCHP-CCGE01	279 	541 
+MINOILCRD6	195 	616 
+RCHP-STWN01	211 	591 
+MINBWODLOG	460 	309 
+INDNEUMSC01	414 	347 
+IFDCHPBIOS01	151 	601 
+TCLPG00	375 	375 
+MINBVOFAT	369 	369 
+RWEWHTRE00	362 	362 
+IISBLAFUR01	356 	358 
+IISCASHRM00	356 	356 
+RHNDHP401	356 	356 
+RCHGOVEN00	350 	350 
+ICHCHPBIOS01	20 	673 
+PBWODWSTTRT01	417 	266 
+ELCIE00	333 	333 
+ELCEE00	333 	333 
+PBOGBOM01	332 	332 
+PBIODST01	335 	320 
+RCHP-STWE01	253 	396 
+RESLFO01	189 	459 
+TFELC01	339 	302 
+MINBWHT1	429 	208 
+EWNDONS101	353 	283 
+IPPPRODRY00	317 	317 
+SHLSHTRG00	316 	316 
+PETHGRASS01	270 	356 
+SHLDHP101	347 	277 
+IOIOTHNGA01	348 	273 
+ACNINHIBIT01	400 	200 
+IPPBOIBIO01	132 	467 
+ADISTELC01	298 	298 
+ELCBIOCOA01	186 	404 
+RHEDHP301	290 	289 
+RHNDHP301	292 	287 
+ACNEWSPEC01	360 	216 
+IOICHPBIOS01		575 
+RHESHTRE00	285 	285 
+RHEBLRRC00	270 	270 
+IOILTHBIOS02		538 
+IISTGRBFQ01	333 	205 
+TCHBPET00	267 	267 
+PRCCOACOK01	262 	264 
+MINCOA4	262 	262 
+TRADST00	260 	260 
+RESKER00	258 	258 
+RDH-BLREE01	328 	184 
+PPELLBIOS00	240 	250 
+RHEDHP201	222 	263 
+TRELC00	236 	236 
+RHEBLRRW00	234 	234 
+IISBLAFUR00	233 	233 
+THCNG01	467 	
+IOIOTHHCO01	142 	318 
+ICMKLNDPC00	224 	224 
+IISBLFIMP01	240 	207 
+SWLWHTRE00	216 	216 
+TADJETN00	213 	213 
+EMAINPGAS00	212 	212 
+IISHISARQ01	208 	208 
+ESTGAACAES01	60 	356 
+RHNBLCRO01	211 	199 
+INMHTHNGA01	196 	206 
+RECOLFRE00	198 	198 
+RDH-BLREN01	226 	165 
+IOIMOTELC02	195 	195 
+TRAPET00	193 	193 
+IISSINTER01	192 	192 
+INDCOK01	190 	192 
+INDWOD01	16 	361 
+TRDST00	188 	188 
+PWLFMSWBIO00	131 	240 
+IOILTHNGA02	228 	140 
+RESKER01	110 	257 
+SERLFO01	158 	201 
+SDH-BLRE01	180 	179 
+INDCOA01	150 	206 
+TFSLJETIAN01	176 	176 
+IISBOXFUR00	172 	172 
+RESLPG00	172 	172 
+INDNEULPG00	164 	164 
+RESWOD00	159 	159 
+IPPPROOTH00	158 	158 
+IPPPROPRS00	158 	158 
+TFSSDST00	158 	158 
+ICMGRIMIX00	150 	150 
+RHESHTRG00	148 	148 
+PETH00	148 	148 
+IISBOIBFG01	199 	97 
+SHLNSTRE00	146 	146 
+IMPELC-IRE	164 	128 
+RHNDHP101	146 	144 
+SHHBLRRG00	143 	143 
+RHNAHBRE01		283 
+TRAHFOIS01	98 	182 
+RHNREFCG01	119 	156 
+INDWODWST01	66 	210 
+IOIOTHBIOS01	139 	134 
+IFDLTHNGA02	150 	116 
+INDCOACOK01	131 	132 
+SMETERELC01	132 	131 
+TRAJETIA00	130 	130 
+ICMKLNOCQR01	26 	233 
+ICHHVCSC00	127 	127 
+ICHCHPNGA00	127 	127 
+TFSSPET00	127 	127 
+IMPBGRASS	124 	124 
+ICHCHPBIOG01	158 	88 
+SHHBLRRE01	186 	59 
+EBOG-SWE00	120 	120 
+ICHMOTELC02	117 	117 
+TRAJETDA01	117 	117 
+PBIODST00	117 	117 
+IMPCOK	113 	113 
+ICHCHPPRO01	117 	106 
+IOIDRYBIOS02	32 	190 
+ICHAMMSRQ01	115 	107 
+ESOLPV00	110 	110 
+ELCPELL01	147 	71 
+RDH-BLRHE01	129 	73 
+AGDBST01	167 	33 
+RWNWHTRE01	102 	95 
+EOILL00	98 	98 
+ICMKLNPCQR02		195 
+TFSSDST01	71 	122 
+ICMKLND00	96 	96 
+IFDCHPBIOG01	53 	135 
+IISELAFUR00	91 	91 
+MINBSUGAR	91 	91 
+IISBOIBIOS01		179 
+ESTWWST00	92 	87 
+MINBWOD4	96 	80 
+SCSVCAVW01	87 	87 
+SHLBLRRG00	87 	87 
+IMPBVOFAT	108 	65 
+IOIOTHNGA00	86 	86 
+UCHP-CCG01	86 	86 
+UCHP-CCG00	86 	86 
+AHTBLRH01	143 	27 
+IISFINPRO01	83 	83 
+RESCOA00	82 	82 
+IISSINTER00	82 	82 
+EPOLWST00	78 	81 
+EBIOS00	78 	79 
+IOIOTHELC01	97 	60 
+PWLFMSWORG00	78 	78 
+PCHP-CCP00	78 	78 
+RESCOK01	78 	74 
+PHMSWORG01	105 	47 
+INDLFO01	72 	78 
+PHYGSTOL01	75 	75 
+SCSVLPDT01	74 	74 
+RDH-BLRGE01	43 	105 
+PVOILRSD01	76 	66 
+PRCCOACOK00	71 	71 
+SMETERELC00	69 	69 
+ICMKLNSW00	67 	67 
+IFDCHPCCGT01	9 	126 
+IFDOTHNGA01	68 	66 
+ELCEI00	67 	67 
+ELCII00	67 	67 
+SCHP-CCG00	66 	66 
+RWESOLRS00	66 	66 
+TFSLJETIAN00	66 	66 
+TRAHFODS01	51 	80 
+IOIMOTELC01	65 	65 
+AGRLPG01	76 	52 
+RWNWHTRG01	128 	
+SDH-BLRG01	9 	111 
+RDH-BLRGN01	75 	44 
+SCKOTH000	60 	60 
+IPPCHPBIOS01	67 	51 
+MINBGRASS1	58 	58 
+SWHBLRRG00	57 	57 
+AGRLFO01	56 	55 
+AHTBLRB00	55 	55 
+TFSLJETIAE01	55 	55 
+INDNEUMSC00	54 	54 
+IOIOTHELC00	54 	54 
+SHLSHTRO00	54 	54 
+IOIHTHELC01	52 	53 
+THYGEYSS01	105 	
+PWLFMSWINO00	52 	52 
+ESTGBALA01		105 
+INMCHPBIOS01	52 	52 
+RHEREFCG01		104 
+INFHTHELC01	55 	47 
+INMHTHELC01	51 	51 
+RWEWHTRG00	49 	49 
+ICMKLNSD00	49 	49 
+RDH-BLRHN01	59 	38 
+RHEAHPRE00	48 	48 
+SHLSHTRE00	47 	47 
+IOICHPBIOG01	68 	26 
+INDKER01	47 	47 
+ICHDRYBIOS02	20 	73 
+MINBWOD1	53 	40 
+IISFINPRO00	47 	47 
+IPPCHPNGA00	47 	47 
+INDCOK00	46 	46 
+AHTBLRG00	46 	46 
+IFDREFEHFO01	45 	45 
+IPPCHPBIOG01	42 	48 
+SHLBLCRG00	45 	45 
+ESTGBNAS01	88 	
+ELCMSWORG01	30 	58 
+SERLFO00	43 	43 
+INFHTHNGA01	42 	44 
+SHHVACAE00	42 	42 
+TDISTELC00	41 	41 
+IOILTHHDG02	38 	44 
+INMHTHNGA00	41 	41 
+ADISTELC00	41 	41 
+IFDOTHHCO01	30 	51 
+IFDCHPNGA00	40 	40 
+IFDLTHBIOS02	35 	45 
+ICHMOTELC01	39 	39 
+TFSSHYGS01	79 	
+ICHCHPCOA00	39 	39 
+RESCOK00	38 	38 
+INDMSWINO01	38 	38 
+SCHP-STW01		75 
+INMCHPBIOG01	11 	63 
+IOIDRYNGA02	33 	40 
+ICHOTHNGA01	37 	36 
+PETHSTWWST01	73 	
+IFDMOTELC02	35 	35 
+IOIOTHLFO00	35 	35 
+RHNDHP201	33 	33 
+TRAHFOIS00	33 	33 
+ICHREFEHFO01	33 	33 
+TFDST00	33 	33 
+PRCCOA01	33 	33 
+ELCCOA01	28 	37 
+AHTBLRG01	65 	
+IOIOTHKER00	32 	32 
+RESCOA01	31 	33 
+IFDLTHHDG02	31 	33 
+IPPCHPBIOS00	31 	31 
+ICMKLNWST02		62 
+IOILTHBIOG02	28 	33 
+IOIHTHHCO01	51 	11 
+AMAINPGAS00	30 	30 
+INDMSWORG01	16 	45 
+IOILTHNGA01	30 	30 
+SCHP-STW00	30 	30 
+IOILTHELC02	24 	34 
+SWHWHTRE00	29 	29 
+IISHRMIMP01	29 	29 
+SERHFO01	29 	29 
+AGRLPG00	29 	29 
+PBOGSTARCH01	58 	
+IFDLTHHFO01	28 	27 
+SCSVLTMR01	27 	27 
+IOIDRYBIOG02	43 	12 
+INDLFO00	27 	27 
+UOILTERM01	27 	27 
+IISSINHRC01	27 	27 
+SERKER01	14 	38 
+INDCOA00	26 	26 
+INMOTHNGA01	25 	24 
+IPPBOINGA01	34 	15 
+INMCHPCOG01	49 	
+ELCCOA00	24 	24 
+INMMOTELC02	24 	24 
+TRAETH01	28 	18 
+SHHBLRRO00	23 	23 
+IOIMOTELC00	23 	23 
+ICHLTHNGA02	25 	19 
+ICHOTHHCO01	19 	24 
+TFSLHFOIS00	21 	21 
+TRALFO01	15 	27 
+SHLBLRRO00	21 	21 
+ETIR101	21 	21 
+TFSLHFOIS01	14 	28 
+ICHCHPCCGT01		41 
+TFSLJETIAE00	20 	20 
+ICHDRYNGA02	24 	16 
+INDHFO01	20 	20 
+IOILTHNGA00	19 	19 
+MINCOACOK1	19 	19 
+IISBOIHYG01	23 	15 
+INDKER00	19 	19 
+RHEDHP100	18 	18 
+SERPELH01		37 
+IOILTHLFO00	18 	18 
+MINBWHT2	22 	13 
+INMDRYBIOS02	8 	27 
+INFHTHELC00	17 	17 
+ELCMSWINO00	17 	17 
+SCSVPTHM01	17 	17 
+IOIDRYELC02	1 	33 
+MINBRSEED	17 	17 
+IOILTHKER00	17 	17 
+RESLFO00	17 	17 
+TRABIODST01	17 	16 
+ELCMSWORG00	16 	16 
+TMAINPGAS01	32 	
+SLOTECCL01	16 	16 
+TFSLDST01	16 	15 
+INMMOTELC01	16 	15 
+INMHTHHCO01	9 	21 
+SHHBLRRW00	15 	15 
+IFDOTHBIOS01	16 	14 
+SCHP-GES00	15 	15 
+ICHAMMSRA01	9 	21 
+SDH-BLRC00	15 	15 
+INDCOACOK00	15 	15 
+IFDDRYBIOS02	9 	20 
+IFDDRYNGA02	15 	13 
+SDH-BLRH01	27 	2 
+SDH-BLRG00	14 	14 
+IOIOTHHCO00	14 	14 
+TFSLJETDAE01	13 	13 
+IISEAFSPH01	13 	13 
+SERMSWORG01	12 	13 
+AGRBIODST01	12 	13 
+TRALFODS00	13 	13 
+INMLTHBIOS02	9 	16 
+INFMOTELC02	12 	12 
+IFDOTHNGA00	12 	12 
+IPPPRSIMP01	12 	12 
+TFSLHFODS01	11 	14 
+ICHMOTELC00	12 	12 
+IOILTHHCO00	12 	12 
+IOIOTHLPG00	12 	12 
+IISCHPBFG00	11 	11 
+IOIHTHNGA00	11 	11 
+MINBWODWST	11 	11 
+SHLBLCRO00	11 	11 
+IFDLTHNGA00	11 	11 
+IISBOIBFG00	10 	10 
+INMHTHELC00	10 	10 
+INDNEULFO01	14 	6 
+MINBPOLWST1	10 	10 
+TFSSETH01	10 	10 
+IFDMOTELC01	10 	10 
+INDBENZ01	10 	10 
+ICHOTHBIOS01	10 	9 
+RCHP-CCGE00	10 	10 
+PHPELL01	13 	6 
+ICHOTHELC01	11 	8 
+TRAJETDA00	9 	9 
+IISBOINGA01	5 	14 
+IPPBOIHYG01	10 	9 
+IOIOTHBENZ01	9 	9 
+TFSLDST00	9 	9 
+INFOTHNGA01	10 	9 
+SHLBLRRW00	9 	9 
+PRCCOA00	9 	9 
+TRABIODST00	9 	9 
+TRALFO00	9 	9 
+SHHBLRRE00	9 	9 
+TFSLBIOOILIS01	16 	1 
+IOIDRYHDG02	15 	2 
+AGRLFO00	8 	8 
+ICHCHPPRO00	8 	8 
+ICHAMMSR00	8 	8 
+ICHLTHHFO01	9 	7 
+INFHTHNGA00	8 	8 
+IOIOTHHDG01	7 	9 
+IFDLTHNGA01	14 	1 
+IOIDRYLFO00	8 	8 
+TRABIOOILIS01	15 	0 
+INMOTHBIOS01	8 	7 
+INDWODWST00	7 	7 
+IISCHPCOG00	7 	7 
+ELCLPG01	6 	8 
+INDMSWINO00	7 	7 
+RESWODL00	7 	7 
+IOIDRYKER00	7 	7 
+IFDOTHELC01	9 	4 
+SHLBLRRW01		13 
+TFSLJETDAN01	6 	6 
+IOICHPNGA00	6 	6 
+IOIHTHELC00	6 	6 
+IOIDRYNGA01	9 	4 
+TFSLLFODS00	6 	6 
+IMPBWODWST	6 	6 
+TFSSCNG01	12 	
+TRALPG01	6 	6 
+UPSLFO00	6 	6 
+ELCSTWWST00	8 	4 
+ICHDRYHDG02	7 	4 
+IPPBOINGA00	6 	6 
+SOTHNGA01	5 	7 
+SERHFO00	6 	6 
+ICHCHPLPG00	5 	5 
+SERLPG01	11 	
+TFSSBIODST00	5 	5 
+TRAETH00	5 	5 
+INMOTHNGA00	5 	5 
+IOIHTHBIOS01	2 	9 
+SHLAHPRE00	5 	5 
+TRCOA00	5 	5 
+TRALPG00	5 	5 
+ELCPELL00	5 	5 
+IISBOICOG00	5 	5 
+TFSLLFO00	5 	5 
+IPPCHPCOA00	5 	5 
+INMOTHHCO01	6 	4 
+SWHBLRRO00	5 	5 
+TFSLHFODS00	5 	5 
+TRAHFODS00	4 	4 
+IOIDRYNGA00	4 	4 
+IOIHTHLFO00	4 	4 
+INFHTHHCO01	4 	4 
+INMOTHHDG01	4 	5 
+ELCLPG00	4 	4 
+TFSLJETDAE00	4 	4 
+INFMOTELC01	4 	4 
+IFDDRYNGA01	5 	4 
+SOTHELC01	5 	3 
+INDHFO00	4 	4 
+IOILTHELC00	4 	4 
+INMHTHLFO00	4 	4 
+IOIHTHKER00	4 	4 
+IOIDRYHCO00	4 	4 
+IOIHTHNGA01	8 	
+IOIOTHBIOS00	4 	4 
+INFOTHBIOS01	4 	4 
+INMDRYHFO01	4 	4 
+INMCHPNGA00	4 	4 
+IOIOTHBENZ00	4 	4 
+SERWOD01		7 
+ELCMSWINO01		7 
+ICHDRYHFO01	3 	4 
+IFDDRYHDG02	4 	3 
+TFSSETH00	3 	3 
+ICHLTHBIOS02		7 
+SHHBLRRC00	3 	3 
+ICHOTHHDG01	7 	
+IOILTHBIOS00	3 	3 
+IFDOTHELC00	3 	3 
+IOILTHLPG00	3 	3 
+SWHBLRRW00	3 	3 
+IOILTHBENZ00	3 	3 
+IFDREFEHFC00	3 	3 
+IOILTHLPG01		6 
+IFDMOTELC00	3 	3 
+INMLTHNGA02	4 	2 
+ICHLTHHDG02	6 	
+INFOTHHFO01	3 	3 
+SERCOA01	3 	3 
+IOIREFEHFO01	3 	3 
+INMLTHBIOG02	3 	2 
+ESOL00	3 	3 
+ICHREFEHFC00	3 	3 
+IFDLTHLFO00	3 	3 
+IOIDRYLPG01	5 	
+SERMSWINO00	3 	3 
+INDBENZ00	3 	3 
+IFDCHPCOA00	2 	2 
+ICHOTHELC00	2 	2 
+INFOTHELC00	2 	2 
+IISBOIHFO00	2 	2 
+INMMOTELC00	2 	2 
+ICHLTHELC02		4 
+SERCOA00	2 	2 
+IOIOTHCOK00	2 	2 
+INMHTHHCO00	2 	2 
+INFOTHHCO01	2 	2 
+TFSLJETDAN00	2 	2 
+IFDLTHBIOG02	2 	2 
+INDMSWORG00	2 	2 
+INMDRYNGA02	2 	2 
+INMCHPCOG00	2 	2 
+IISBLFIMP02	2 	2 
+INMLTHHFO01	2 	2 
+SERMSWORG00	2 	2 
+TFSSLPG00	2 	2 
+INFOTHELC01	2 	2 
+IPPBOICOA00	2 	2 
+IOILTHCOK00	2 	2 
+IOIHTHLPG00	2 	2 
+INDNEULFO00	2 	2 
+IFDOTHLFO00	2 	2 
+IPPCHPWST00	2 	2 
+ELCLFO01	2 	1 
+ELCHFO01	2 	2 
+IOIOTHHFO00	2 	2 
+INMDRYBIOG02	2 	1 
+INMLTHHDG02	1 	1 
+AHTBLRO00	1 	1 
+RDH-BLRGE00	1 	1 
+INMOTHELC00	1 	1 
+INMDRYHDG02	1 	1 
+IOIDRYLPG00	1 	1 
+SHLBLRRC00	1 	1 
+INFOTHNGA00	1 	1 
+INFMOTELC00	1 	1 
+IFDLTHELC00	1 	1 
+IFDDRYNGA00	1 	1 
+ICHCHPBIOS00	1 	1 
+TFSSBIODST01	2 	1 
+ENGAQR01	2 	
+IFDDRYBIOG02	2 	0 
+IOIDRYBIOS00	1 	1 
+TFSLLFO01		2 
+ICHLTHNGA01	2 	
+IOIDRYBENZ00	1 	1 
+TFELC00	1 	1 
+TRACOA00	1 	1 
+IOICHPBIOS00	1 	1 
+IFDCHPBIOS00	1 	1 
+ICHHTHNGA01	1 	1 
+RNWSOL	1 	1 
+IFDOTHHDG01	1 	1 
+TFSSLPG01	1 	1 
+TFSLBIODST01	1 	1 
+ICHDRYBIOG02	2 	
+INDPOLWST00	1 	1 
+ICHLTHBIOG02	2 	
+ELCLFO00	1 	1 
+IOILTHHFO00	1 	1 
+SWHBLRRC00	1 	1 
+INMOTHLFO00	1 	1 
+INMOTHELC01	1 	
+ICHHTHHCO01	1 	1 
+IOIDRYELC00	1 	1 
+UPSLFO01	1 	1 
+INMLTHNGA00	1 	1 
+AGRHFO00	1 	1 
+IOIDRYCOK00	1 	1 
+INFHTHHFO00	1 	1 
+INFHTHLFO00	1 	1 
+INMDRYNGA00	1 	1 
+IFDLTHHCO00	1 	1 
+INFHTHHCO00	1 	1 
+IFDDRYHFO01	1 	
+MINBGRASS2	0 	0 
+IFDLTHHFO00	0 	0 
+ICHLTHELC00	0 	0 
+IOIOTHBIOG00	0 	0 
+IISCHPNGA00	0 	0 
+IOIDRYHFO00	0 	0 
+TFSLBIODST00	0 	0 
+IFDDRYLFO00	0 	0 
+MINMSWINO	0 	0 
+IFDOTHHFO00	0 	0 
+AHTBLRC00	0 	0 
+IOIHTHHCO00	0 	0 
+ICHHTHELC01	0 	0 
+IOIREFEHFC00	0 	0 
+ICHHTHHCO00	0 	0 
+ICHDRYELC00	0 	0 
+ICHCHPLFO00	0 	0 
+ICMPCL01	0 	0 
+ICHDRYNGA01		0 
+IOIHTHHFO00	0 	0 
+AGRHFO01	0 	0 
+IFDCHPHFO00	0 	0 
+IFDOTHHCO00	0 	0 
+ICHCHPHFO00	0 	0 
+TRALFODS01	0 	0 
+IFDDRYELC00	0 	0 
+INMLTHLFO00	0 	0 
+ICHCHPCOA01		0 
+INMDRYLFO00	0 	0 
+MINMSWORG	0 	0 
+IFDCHPLFO00	0 	0 
+IOICHPHFO00	0 	0 
+INFOTHHFO00	0 	0 
+INFOTHLFO00	0 	0 
+IOILTHBIOG00	0 	0 
+MINMSWBIO	0 	0 
+INFOTHHCO00	0 	0 
+EMANOCT00	0 	0 
+ICHHTHELC00	0 	0 
+IOIHTHBIOS00	0 	0 
+INMLTHELC00	0 	0 
+IOIHTHBENZ00	0 	0 
+INMDRYELC00	0 	0 
+IISCHPHFO00	0 	0 
+IFDDRYHCO00	0 	0 
+TFSLLFODS01	0 	0 
+RNWGEO	0 	0 
+IFDDRYHFO00	0 	0 
+MINBOG-LF	0 	0 
+EOILS00	0 	0 
+IOIHTHCOK00	0 	0 
+ALUFOR01	0 	0 
+IOIDRYBIOG00	0 	0 
+ENGAOCT00	0 	0 
+RHEBLRRE00	0 	0 
+IOIHTHBIOG00	0 	0 
+RNWTID	0 	0 
+EHYD01	0 	0 
+ECOARR01	0 	0 
+EOILS01	0 	0 
+IMPBVOIL	0 	0 
+RWESA00	0 	0 
+IOIDRYSTM00	0 	0 
+PWLFLEGACY00	0 	0 
+RELITCON00	0 	0 
+RHESTGNT00	0 	0 
+IFDDRYSTM00	0 	0 
+AELC00	0 	0 
+IOILTHSTM00	0 	0 
+IFDOTHSTM00	0 	0 
+UNGAD00	0 	0 
+SLOTECCL00	0 	0 
+IFDLTHSTM00	0 	0 
+INMDRYSTM00	0 	0 
+SCSVACON01	0 	0 
+IOIOTHSTM00	0 	0 
+SWLDSTD00	0 	0 
+SHLSTGNT00	0 	0 
+SLOFEFLU00	0 	0 
+RHESA00	0 	0 
+SCPECOMP00	0 	0 
+RELITENS00	0 	0 
+ATRA00	0 	0 
+RELITLED00	0 	0 
+INMOTHSTM00	0 	0 
+INMLTHSTM00	0 	0 
+REAUDVIS00	0 	0 
+ETRANSGAS00	0 	0 
+SOTHELC00	0 	0 
+REOTHER01	0 	0 
+RCEOTHER00	0 	0 
+RECOMPUT00	0 	0 
+REOTHER00	0 	0 
+SOTHNGA00	0 	0 
+ALU00	0 	0 
+SHLDSTD00	0 	0 
+EXPELC-IRE	-9 	-20 
+EXPELC-EU	-20 	-72 
+EXPCOK	-255 	-255 
+EXPOILJET	-430 	-430 
+EXPOILKER	-334 	-585 
+ACTILLAGE01	-530 	-530 
+AGDMANION01	-553 	-553 
+EXPCOA	-598 	-821 
+EXPOILLPG	-1393 	-1274 
+ACFERT01	-2677 	-2677 
+EXPETH	-2380 	-3075 
+EXPOILCRD2	-2863 	-2863 
+EXPCOA-E	-5350 	-5713 
+AGBGENION01	-6989 	-6989 
+EXPOILDST	-8069 	-9563 
+EXPOILHFO	-11879 	-10608 
+EXPOILPET	-15798 	-13617 
+EXPOILLFO	-26260 	-23679 
+EXPOILMSC	-20444 	-29525 
+EXPNGA-IRE	-55796 	-55796 
+EXPNGA-E	-66943 	-88266 
+EXPNGA-EU	-86931 	-86931 
+EXPOILCRD1	-90376 	-93065 
+EXPOILCRD1-E	-99466 	-101957 
+    </textarea>
+    <br>
+    <p>What would you like to compare? <input value='Cost' id='topic'></p>
+    <p>What is the name of the first scenario? <input value='Scenario A' id='a_name'></p>
+    <p>What is the name of the second scenario? <input value='Scenario B' id='b_name'></p>
+    <input type='submit' id='go' value='Redraw chart'/>
+  </div>
+  <div id='chart'>
+  </div>
+
+  <script>
+
+var topic = "Cost";
+
+var a_name = "Scenario A";
+
+var b_name = "Scenario B";
+
+var data = {
+      a_negative: [],
+      a_positive: [],
+      diff_positive: [],
+      diff_negative: [],
+      b_positive: [],
+      b_negative: []
+    } 
+
+var a_positive_total = 0, 
+    b_positive_total = 0, 
+    a_negative_total = 0, 
+    b_negative_total = 0;
+    diff_positive_total = 0;
+    diff_negative_total = 0;
+
+var number_of_columns = 0;
+
+var margin = {top: 20, right: 20, bottom: 30, left: 50},
+    width = 1200 - margin.left - margin.right,
+    height = 800 - margin.top - margin.bottom;
+
+var x = d3.scale.ordinal()
+    .rangeRoundBands([130, width-130], .1);
+
+var y = d3.scale.linear()
+    .rangeRound([height, 0]);
+
+var color = d3.scale.category20c();
+var used_ids = d3.set();
+
+var minimum_pixels_for_display_stack = 15;
+var minimum_value_for_display_stack = 0; // Set once scale is set
+var minimum_pixels_for_display_brick = 2;
+var minimum_value_for_display_brick = 0; // Set once scale is set
+
+var yAxis = d3.svg.axis()
+    .scale(y)
+    .orient("left")
+    .tickFormat(d3.format(".2s"));
+
+var svg = d3.select("#chart").append("svg")
+    .attr("width", width + margin.left + margin.right)
+    .attr("height", height + margin.top + margin.bottom)
+  .append("g")
+    .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+var backing = svg.append("g")
+  .attr("id", "backing");
+
+backing.append("rect").attr("id", "backingleft");
+backing.append("rect").attr("id", "backingright");
+backing.append("rect").attr("id", "backingdiff");
+
+
+svg.append("g")
+    .attr("class", "x axis")
+    .append('line');
+
+svg.append("g")
+    .attr("class", "y axis")
+    .call(yAxis);
+
+svg.append("text")
+  .attr("class", "stacklabel")
+  .attr("id","leftlabel")
+  .attr("text-anchor", "middle")
+  .attr("y", 15)
+  .text(topic+" of "+a_name);
+
+svg.append("text")
+  .attr("class", "stacklabel")
+  .attr("id","rightlabel")
+  .attr("text-anchor", "middle")
+  .attr("y", 15)
+  .text(topic+" of "+b_name);
+
+svg.append("text")
+  .attr("class", "stacklabel")
+  .attr("id","decreaselabel")
+  .attr("text-anchor", "middle")
+  .attr("y", 55)
+  .text("Reduce these "+topic+"s");
+
+svg.append("text")
+  .attr("class", "stacklabel")
+  .attr("id","increaselabel")
+  .attr("text-anchor", "middle")
+  .attr("y", 55)
+  .text("Increase these "+topic+"s");
+
+svg.append("text")
+  .attr("class", "stacklabel")
+  .attr("id","difflabel")
+  .attr("text-anchor", "middle")
+  .attr("y", 15)
+  .attr("x", width/2)
+  .text("Difference in "+topic+" between the scenarios");
+
+
+var reformat_tsv = function(d) { // Munge the data
+  if(d.length < 3) { return; }
+  // Force the columns to be numbers and add a difference
+  var label, a, b, diff, r;
+  label = d[0].trim();
+  a = +(d[1].replace(/[,()]/,''));
+  b = +(d[2].replace(/[,()]/,''));
+  diff = b - a;
+
+  r = { label: label, a: a, b: b, diff: diff }
+  // Keep track of the positive and negative totals
+  if(a >= 0) {
+    data.a_positive.push(r);
+    a_positive_total = a_positive_total + a;
+  } else {
+    data.a_negative.push(r);
+    a_negative_total = a_negative_total + a;
+  };
+
+  r = { label: label, a: a, b: b, diff: diff }
+  if(b >= 0) {
+    data.b_positive.push(r);
+    b_positive_total = b_positive_total + b;
+  } else {
+    data.b_negative.push(r);
+    b_negative_total = b_negative_total + b;
+  };
+
+  r = { label: label, a: a, b: b, diff: diff }
+  if(diff > 0) {
+    data.diff_positive.push(r);
+    diff_positive_total = diff_positive_total + diff;
+  } else {
+    data.diff_negative.push(r);
+    diff_negative_total = diff_negative_total + diff;
+  }
+
+  return r;
+} 
+
+var data_loaded = function() { 
+  var y_domain = [0,0];
+  // First we work out the extreme ends in order to set the scale
+  if(a_negative_total < b_negative_total) {
+    y_domain[0] = a_negative_total;
+  } else {
+    y_domain[0] = b_negative_total;
+  }
+
+  if(a_positive_total > b_positive_total) {
+    y_domain[1] = a_positive_total;
+  } else {
+    y_domain[1] = b_positive_total;
+  }
+  
+  // Set the y_domain of the y to cover the full data range
+  y.domain(y_domain).nice();
+
+  minimum_value_for_display_stack = Math.abs(y.invert(minimum_pixels_for_display_stack) - y.invert(0));
+  minimum_value_for_display_brick = Math.abs(y.invert(minimum_pixels_for_display_brick) - y.invert(0));
+
+  // Now we replace a bunch of values with 'other'
+  data.a_positive = replace_with_other(data.a_positive, minimum_value_for_display_stack, 'a');
+  data.a_negative = replace_with_other(data.a_negative, minimum_value_for_display_stack, 'a');
+  data.b_positive = replace_with_other(data.b_positive, minimum_value_for_display_stack, 'b');
+  data.b_negative = replace_with_other(data.b_negative, minimum_value_for_display_stack, 'b');
+  data.diff_positive = replace_with_other(data.diff_positive, minimum_value_for_display_brick, 'diff');
+  data.diff_negative = replace_with_other(data.diff_negative, minimum_value_for_display_brick, 'diff');
+
+  // From that we can work out the x axis domain
+  // Starts with 2 for the negative and positive of the first bar
+  // then space for all the up bricks and down bricks
+  // then a 2 for the negative and positive parts of the last bar
+  number_of_columns = 2 + 1 + data.diff_positive.length + 1 + data.diff_negative.length + 1 + 2;
+  x.domain(d3.range(number_of_columns)); 
+  position_data();
+  draw();
+};
+
+// This function takes an array of data, and for any parameter in that
+// data that is below the threshold, combines that data into an 
+// other category. It returns a smaller array of data that contains
+// the 'other' and the category
+var replace_with_other = function(data, threshold, parameter) {
+  var other = { label: 'other' },
+      new_data = [],
+      value_collected = 0,
+      value_in_other = 0;
+
+  data.forEach(function(d) {
+      var v = d[parameter];
+      if(Math.abs(v) > threshold) {
+        new_data.push(d);
+        value_collected = value_collected + v;
+      } else {
+        value_in_other = value_in_other + v;
+      }
+      });
+
+  other[parameter] = value_in_other;
+
+  new_data.push(other);
+
+  // Rely on data only being all positive or all negative
+  // Then sort so largest (absolute) values are at the start
+  new_data.sort(function(a,b) { 
+    return Math.abs(b[parameter]) - Math.abs(a[parameter]);
+  });
+  
+  return new_data;
+}
+
+// We need to make each of the data points stack correctly
+var position_data = function() {
+  stack('ln', data.a_negative, 'a', 0, 0, 0); // Down
+  stack('lp', data.a_positive, 'a', a_negative_total, 1, 0); // Up
+  stack('dn', data.diff_negative.reverse(), 'diff', a_negative_total + a_positive_total, 3, 1); // Down
+  stack('dp', data.diff_positive, 'diff', a_negative_total + a_positive_total + diff_negative_total, 3 + data.diff_negative.length + 1, 1); // Up
+  //stack('dp', data.diff_positive, 'diff', a_negative_total + a_positive_total, 3, 1); // Up
+  //stack('dn', data.diff_negative.reverse(), 'diff', a_negative_total + a_positive_total + diff_positive_total, 3 + data.diff_positive.length + 1, 1); // Down
+  stack('rp', data.b_positive, 'b', b_negative_total, 3 + data.diff_positive.length + 1 + data.diff_negative.length + 1 , 0); // Down
+  stack('rn', data.b_negative, 'b', 0, 3 + data.diff_positive.length + 1 + data.diff_negative.length + 1 + 1, 0); // Up
+}
+
+var stack = function(type, data, parameter, y_start, x_start, x_inc) {
+  var y0, y1, x, y;
+  x = x_start;
+  y = y_start;
+  data.forEach(function(d) {
+    h = d[parameter];
+    d.x = x;
+    d.type = type;
+    d.css = d.label.replace(/\W+/g,'');
+    used_ids.add(d.css);
+    x = x + x_inc;
+    if(h >= 0) {
+      d.y0 = y;
+      d.y1 = y + h;
+      y = y+ h;
+    } else {
+      d.y1 = y;
+      d.y0 = y + h;
+      d.h = -h;
+      y = y+h;
+    }
+  });
+  return data;
+}
+
+var draw = function() {
+  var label_y = 0, minimum_label_y_spacing = 10, lines, bricks, all_data, labels;
+
+  all_data = [].concat(data.a_negative, data.a_positive, data.diff_positive, data.diff_negative, data.b_positive, data.b_negative);
+
+  color.domain(used_ids.values());
+
+  bricks = svg.selectAll(".brick").data(all_data);
+
+  bricks.enter().append("rect")
+    .attr("class", function(d) { return "brick "+d.css; })
+    .attr("fill", function(d) { return color(d.css); });
+  
+  bricks.exit().remove();
+
+  bricks
+    .attr("x", function(d) { return x(d.x); })
+    .attr("y", function(d) { return y(d.y1); })
+    .attr("width", x.rangeBand())
+    .attr("height", function(d) { return y(d.y0)-y(d.y1); });
+
+  d3.select(".y.axis").call(yAxis);
+
+  d3.select(".x.axis line")
+    .attr('x1', 0)
+    .attr('x2', width)
+    .attr('y1', y(0))
+    .attr('y2', y(0));
+
+  labels = svg.selectAll(".label").data(all_data);
+
+  labels.enter().append("text")
+    .text(function(d) { return d.label; })
+    .attr("fill", function(d) { return color(d.css); })
+    .attr("class", function(d) { return "label "+d.type+" "+d.css; })
+    .attr("dy", '0.3em');
+
+  svg.selectAll(".label.ln, .label.lp, .label.dn")
+    .attr("text-anchor", "end");
+
+  svg.selectAll(".label.ln, .label.lp")
+    .attr("dx", -1);
+
+  svg.selectAll(".label.dn, .label.dp")
+    .attr("dx", x.rangeBand()/2);
+
+  svg.selectAll(".label.rn, .label.rp")
+    .attr("dx", x.rangeBand()+1);
+
+  labels.attr("x", function(d) { return x(d.x);  });
+  labels.attr("y", function(d) { return y((d.y0+d.y1)/2);  });
+
+  svg.selectAll(".label.dp")
+    .sort(function(a,b) { return b.y0 - a.y0; })
+    .attr("y", function(d) {
+      var desired_y = y(d.y0)+6;
+      var minimum_y = label_y + minimum_label_y_spacing;
+      if(minimum_y > desired_y) {
+        desired_y = minimum_y;
+        label_y = label_y + minimum_label_y_spacing;
+      } else {
+        label_y = desired_y;
+      }
+      return desired_y;
+      });
+
+  label_y = 0;
+
+  svg.selectAll(".label.dn")
+    .sort(function(a,b) { return b.y1 - a.y1; })
+    .attr("y", function(d) {
+      var desired_y = y(d.y0)+6;
+      var minimum_y = label_y + minimum_label_y_spacing;
+      if(minimum_y > desired_y) {
+        desired_y = minimum_y;
+        label_y = label_y + minimum_label_y_spacing;
+      } else {
+        label_y = desired_y;
+      }
+      return desired_y;
+      });
+
+  var lines = svg.selectAll("line.connector.dp").data(data.diff_positive);
+
+  lines.enter().append("line").attr("class", "connector dp");
+
+  lines.exit().remove();
+
+  lines
+    .attr('x1', function(d) { return x(d.x-1); })
+    .attr('x2', function(d) { return x(d.x)+x.rangeBand(); })
+    .attr('y1', function(d) { return y(d.y0); })
+    .attr('y2', function(d) { return y(d.y0); });
+
+  lines = svg.selectAll("line.connector.dn").data(data.diff_negative);
+
+  lines.enter().append("line").attr("class", "connector dn");
+
+  lines.exit().remove();
+
+  lines
+    .attr('x1', function(d) { return x(d.x); })
+    .attr('x2', function(d) { return x(d.x+1)+x.rangeBand(); })
+    .attr('y1', function(d) { return y(d.y0); })
+    .attr('y2', function(d) { return y(d.y0); });
+    
+
+  // Add the other connecting lines
+  lines = svg.selectAll("line.connector.lefttodiff").data([1]);
+
+  lines.enter().append("line").attr("class", "connector lefttodiff");
+
+  lines.exit().remove();
+
+  lines
+    .attr('x1', function(d) { return x(1); })
+    .attr('x2', function(d) { return x(3)+x.rangeBand(); })
+    .attr('y1', function(d) { return y(a_negative_total + a_positive_total); })
+    .attr('y2', function(d) { return y(a_negative_total + a_positive_total); });
+
+  lines = svg.selectAll("line.connector.righttodiff").data([1]);
+
+  lines.enter().append("line").attr("class", "connector righttodiff");
+
+  lines.exit().remove();
+
+  lines
+    .attr('x1', function(d) { return x(number_of_columns-4); })
+    .attr('x2', function(d) { return x(number_of_columns-2)+x.rangeBand(); })
+    .attr('y1', function(d) { return y(b_negative_total + b_positive_total); })
+    .attr('y2', function(d) { return y(b_negative_total + b_positive_total); });
+
+  lines = svg.selectAll("line.connector.left").data([1]);
+
+  lines.enter().append("line").attr("class", "connector left");
+
+  lines.exit().remove();
+
+  lines
+    .attr('x1', function(d) { return x(0); })
+    .attr('x2', function(d) { return x(1)+x.rangeBand(); })
+    .attr('y1', function(d) { return y(a_negative_total); })
+    .attr('y2', function(d) { return y(a_negative_total); });
+
+
+  lines = svg.selectAll("line.connector.right").data([1]);
+
+  lines.enter().append("line").attr("class", "connector right");
+
+  lines.exit().remove();
+
+  lines
+    .attr('x1', function(d) { return x(number_of_columns-2); })
+    .attr('x2', function(d) { return x(number_of_columns-1)+x.rangeBand(); })
+    .attr('y1', function(d) { return y(b_negative_total); })
+    .attr('y2', function(d) { return y(b_negative_total); });
+
+  d3.select('#leftlabel')
+    .text(topic+" of "+a_name)
+    .attr("x", x(2)/2);
+
+  d3.select('#rightlabel')
+    .text(topic+" of "+b_name)
+    .attr("x", (x(number_of_columns-2)+width)/2);
+
+  d3.select('#decreaselabel')
+    .attr("x", x(Math.ceil((4+data.diff_negative.length)/2)))
+    .attr("y", y(a_negative_total + a_positive_total)-20)
+    .text("Reduce these "+topic+"s");
+
+  d3.select('#increaselabel')
+    .attr("x", x(Math.ceil(((number_of_columns-4)+(number_of_columns-4-data.diff_negative.length))/2)))
+    .attr("y", y(b_negative_total + b_positive_total)-20)
+    .text("Increase these "+topic+"s");
+
+  d3.select('#difflabel').text("Difference in "+topic+" between the scenarios");
+
+  svg.select("#backingleft")
+    .attr("x", 5)
+    .attr("width", x(2)+5)
+    .attr("y", 0)
+    .attr("height", height);
+
+  svg.select("#backingright")
+    .attr("x", x(number_of_columns-2)-5)
+    .attr("width", x(2)+5)
+    .attr("y", 0)
+    .attr("height", height);
+
+  svg.select("#backingdiff")
+    .attr("x", x(3)-5)
+    .attr("width", x(number_of_columns-3)-x(3)+5)
+    .attr("y", 0)
+    .attr("height", y(a_negative_total + a_positive_total + diff_negative_total)+50);
+
+
+}
+
+var go = function() {
+  data = {
+    a_negative: [],
+    a_positive: [],
+    diff_positive: [],
+    diff_negative: [],
+    b_positive: [],
+    b_negative: []
+  } 
+
+  a_positive_total = 0; 
+  b_positive_total = 0; 
+  a_negative_total = 0; 
+  b_negative_total = 0;
+  diff_positive_total = 0;
+  diff_negative_total = 0;
+
+  number_of_columns = 0;
+
+  var tsv = d3.select('#tsv').node().value;
+  topic = d3.select('#topic').node().value;
+  a_name = d3.select('#a_name').node().value;
+  b_name = d3.select('#b_name').node().value;
+  d3.tsv.parseRows(tsv, reformat_tsv);
+  data_loaded();
+};
+
+d3.select("#go").on("click", function(){ go(); d3.event.preventDefault();} );
+
+go();
+
+
+  </script>
+</body>
+</html>
