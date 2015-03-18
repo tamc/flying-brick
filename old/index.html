@@ -1,0 +1,490 @@
+<html>
+  <meta charset='utf-8'>
+  <script src="d3.min.js"></script>
+  <style>
+body {
+}
+
+  .axis path, .axis line {
+    fill: none;
+    stroke: #000;
+    shape-rendering: crispEdges;
+  }
+    
+  rect.brick {
+    stroke: #fff;
+    shape-rendering: crispEdges;
+  }
+
+  text.ld, text.lu {
+  }
+
+  text.stacklabel {
+    font-weight: bold;
+  }
+
+  text.label {
+    font-size: 10px;
+  }
+
+  line.connector {
+    stroke: #000;
+    fill: none;
+    shape-rendering: crispEdges;
+    stroke-thickness: 1px;
+  }
+
+  #backing rect {
+    fill: #eef;
+    fill-opacity: 0.5;
+    stroke: none;
+  }
+  
+
+  </style>
+  <title>Flying bricks</title>
+  <body>
+
+  <script>
+var data = {
+      a_negative: [],
+      a_positive: [],
+      diff_positive: [],
+      diff_negative: [],
+      b_positive: [],
+      b_negative: []
+    } 
+
+var a_positive_total = 0, 
+    b_positive_total = 0, 
+    a_negative_total = 0, 
+    b_negative_total = 0;
+    diff_positive_total = 0;
+    diff_negative_total = 0;
+
+var number_of_columns = 0;
+
+var margin = {top: 20, right: 20, bottom: 30, left: 50},
+    width = 1200 - margin.left - margin.right,
+    height = 800 - margin.top - margin.bottom;
+
+var x = d3.scale.ordinal()
+    .rangeRoundBands([130, width-130], .1);
+
+var y = d3.scale.linear()
+    .rangeRound([height, 0]);
+
+var color = d3.scale.category20c();
+var used_ids = d3.set();
+
+var minimum_pixels_for_display_stack = 15;
+var minimum_value_for_display_stack = 0; // Set once scale is set
+var minimum_pixels_for_display_brick = 2;
+var minimum_value_for_display_brick = 0; // Set once scale is set
+
+var yAxis = d3.svg.axis()
+    .scale(y)
+    .orient("left")
+    .tickFormat(d3.format(".2s"));
+
+var svg = d3.select("body").append("svg")
+    .attr("width", width + margin.left + margin.right)
+    .attr("height", height + margin.top + margin.bottom)
+  .append("g")
+    .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+var backing = svg.append("g")
+  .attr("id", "backing");
+
+backing.append("rect").attr("id", "backingleft");
+backing.append("rect").attr("id", "backingright");
+backing.append("rect").attr("id", "backingdiff");
+
+
+svg.append("g")
+    .attr("class", "x axis")
+    .append('line');
+
+svg.append("g")
+    .attr("class", "y axis")
+    .call(yAxis);
+
+svg.append("text")
+  .attr("class", "stacklabel")
+  .attr("id","leftlabel")
+  .attr("text-anchor", "middle")
+  .attr("y", 15)
+  .text("Cost of High Carbon scenario");
+
+svg.append("text")
+  .attr("class", "stacklabel")
+  .attr("id","rightlabel")
+  .attr("text-anchor", "middle")
+  .attr("y", 15)
+  .text("Cost of Low Carbon scenario");
+
+svg.append("text")
+  .attr("class", "stacklabel")
+  .attr("id","decreaselabel")
+  .attr("text-anchor", "middle")
+  .attr("y", 55)
+  .text("Reduce these costs");
+
+svg.append("text")
+  .attr("class", "stacklabel")
+  .attr("id","increaselabel")
+  .attr("text-anchor", "middle")
+  .attr("y", 55)
+  .text("Increase these costs");
+
+svg.append("text")
+  .attr("class", "stacklabel")
+  .attr("id","difflabel")
+  .attr("text-anchor", "middle")
+  .attr("y", 15)
+  .attr("x", width/2)
+  .text("Difference in costs between the scenarios");
+
+
+var reformat_tsv = function(d) { // Munge the data
+  // Force the columns to be numbers and add a difference
+  var r = { label: d.label, a: +d.b, b: +d.a, diff: ((+d.a)-(+d.b)) }
+  // Keep track of the positive and negative totals
+  if(r.a >= 0) {
+    data.a_positive.push(r);
+    a_positive_total = a_positive_total + r.a;
+  } else {
+    data.a_negative.push(r);
+    a_negative_total = a_negative_total + r.a;
+  };
+
+  var r = { label: d.label, a: +d.b, b: +d.a, diff: ((+d.a)-(+d.b)) }
+  if(r.b >= 0) {
+    data.b_positive.push(r);
+    b_positive_total = b_positive_total + r.b;
+  } else {
+    data.b_negative.push(r);
+    b_negative_total = b_negative_total + r.b;
+  };
+
+  var r = { label: d.label, a: +d.b, b: +d.a, diff: ((+d.a)-(+d.b)) }
+  if(r.diff > 0) {
+    data.diff_positive.push(r);
+    diff_positive_total = diff_positive_total + r.diff;
+  } else {
+    data.diff_negative.push(r);
+    diff_negative_total = diff_negative_total + r.diff;
+  }
+
+  return r;
+} 
+
+var data_loaded = function(parsed_tsv, error) { 
+  var y_domain = [0,0];
+  // First we work out the extreme ends in order to set the scale
+  if(a_negative_total < b_negative_total) {
+    y_domain[0] = a_negative_total;
+  } else {
+    y_domain[0] = b_negative_total;
+  }
+
+  if(a_positive_total > b_positive_total) {
+    y_domain[1] = a_positive_total;
+  } else {
+    y_domain[1] = b_positive_total;
+  }
+  
+  // Set the y_domain of the y to cover the full data range
+  y.domain(y_domain).nice();
+
+  minimum_value_for_display_stack = Math.abs(y.invert(minimum_pixels_for_display_stack) - y.invert(0));
+  minimum_value_for_display_brick = Math.abs(y.invert(minimum_pixels_for_display_brick) - y.invert(0));
+
+  // Now we replace a bunch of values with 'other'
+  data.a_positive = replace_with_other(data.a_positive, minimum_value_for_display_stack, 'a');
+  data.a_negative = replace_with_other(data.a_negative, minimum_value_for_display_stack, 'a');
+  data.b_positive = replace_with_other(data.b_positive, minimum_value_for_display_stack, 'b');
+  data.b_negative = replace_with_other(data.b_negative, minimum_value_for_display_stack, 'b');
+  data.diff_positive = replace_with_other(data.diff_positive, minimum_value_for_display_brick, 'diff');
+  data.diff_negative = replace_with_other(data.diff_negative, minimum_value_for_display_brick, 'diff');
+
+  // From that we can work out the x axis domain
+  // Starts with 2 for the negative and positive of the first bar
+  // then space for all the up bricks and down bricks
+  // then a 2 for the negative and positive parts of the last bar
+  number_of_columns = 2 + 1 + data.diff_positive.length + 1 + data.diff_negative.length + 1 + 2;
+  x.domain(d3.range(number_of_columns)); 
+  position_data();
+  draw();
+};
+
+// This function takes an array of data, and for any parameter in that
+// data that is below the threshold, combines that data into an 
+// other category. It returns a smaller array of data that contains
+// the 'other' and the category
+var replace_with_other = function(data, threshold, parameter) {
+  var other = { label: 'other' },
+      new_data = [],
+      value_collected = 0,
+      value_in_other = 0;
+
+  data.forEach(function(d) {
+      var v = d[parameter];
+      if(Math.abs(v) > threshold) {
+        new_data.push(d);
+        value_collected = value_collected + v;
+      } else {
+        value_in_other = value_in_other + v;
+      }
+      });
+
+  other[parameter] = value_in_other;
+
+  new_data.push(other);
+
+  // Rely on data only being all positive or all negative
+  // Then sort so largest (absolute) values are at the start
+  new_data.sort(function(a,b) { 
+    return Math.abs(b[parameter]) - Math.abs(a[parameter]);
+  });
+  
+  return new_data;
+}
+
+// We need to make each of the data points stack correctly
+var position_data = function() {
+  stack('ln', data.a_negative, 'a', 0, 0, 0); // Down
+  stack('lp', data.a_positive, 'a', a_negative_total, 1, 0); // Up
+  stack('dn', data.diff_negative.reverse(), 'diff', a_negative_total + a_positive_total, 3, 1); // Down
+  stack('dp', data.diff_positive, 'diff', a_negative_total + a_positive_total + diff_negative_total, 3 + data.diff_negative.length + 1, 1); // Up
+  //stack('dp', data.diff_positive, 'diff', a_negative_total + a_positive_total, 3, 1); // Up
+  //stack('dn', data.diff_negative.reverse(), 'diff', a_negative_total + a_positive_total + diff_positive_total, 3 + data.diff_positive.length + 1, 1); // Down
+  stack('rp', data.b_positive, 'b', b_negative_total, 3 + data.diff_positive.length + 1 + data.diff_negative.length + 1 , 0); // Down
+  stack('rn', data.b_negative, 'b', 0, 3 + data.diff_positive.length + 1 + data.diff_negative.length + 1 + 1, 0); // Up
+}
+
+var stack = function(type, data, parameter, y_start, x_start, x_inc) {
+  var y0, y1, x, y;
+  x = x_start;
+  y = y_start;
+  data.forEach(function(d) {
+    h = d[parameter];
+    d.x = x;
+    d.type = type;
+    d.css = d.label.replace(/\W+/g,'');
+    used_ids.add(d.css);
+    x = x + x_inc;
+    if(h >= 0) {
+      d.y0 = y;
+      d.y1 = y + h;
+      y = y+ h;
+    } else {
+      d.y1 = y;
+      d.y0 = y + h;
+      d.h = -h;
+      y = y+h;
+    }
+  });
+  return data;
+}
+
+var draw = function() {
+  var label_y = 0, minimum_label_y_spacing = 10, lines, bricks, all_data, labels;
+
+  all_data = [].concat(data.a_negative, data.a_positive, data.diff_positive, data.diff_negative, data.b_positive, data.b_negative);
+
+  color.domain(used_ids.values());
+
+  bricks = svg.selectAll(".brick").data(all_data);
+
+  bricks.enter().append("rect")
+    .attr("class", function(d) { return "brick "+d.css; })
+    .attr("fill", function(d) { return color(d.css); });
+  
+  bricks.exit().remove();
+
+  bricks
+    .attr("x", function(d) { return x(d.x); })
+    .attr("y", function(d) { return y(d.y1); })
+    .attr("width", x.rangeBand())
+    .attr("height", function(d) { return y(d.y0)-y(d.y1); });
+
+  d3.select(".y.axis").call(yAxis);
+
+  d3.select(".x.axis line")
+    .attr('x1', 0)
+    .attr('x2', width)
+    .attr('y1', y(0))
+    .attr('y2', y(0));
+
+  labels = svg.selectAll(".label").data(all_data);
+
+  labels.enter().append("text")
+    .text(function(d) { return d.label; })
+    .attr("fill", function(d) { return color(d.css); })
+    .attr("class", function(d) { return "label "+d.type+" "+d.css; })
+    .attr("dy", '0.3em');
+
+  svg.selectAll(".label.ln, .label.lp, .label.dn")
+    .attr("text-anchor", "end");
+
+  svg.selectAll(".label.ln, .label.lp")
+    .attr("dx", -1);
+
+  svg.selectAll(".label.dn, .label.dp")
+    .attr("dx", x.rangeBand()/2);
+
+  svg.selectAll(".label.rn, .label.rp")
+    .attr("dx", x.rangeBand()+1);
+
+  labels.attr("x", function(d) { return x(d.x);  });
+  labels.attr("y", function(d) { return y((d.y0+d.y1)/2);  });
+
+  svg.selectAll(".label.dp")
+    .sort(function(a,b) { return b.y0 - a.y0; })
+    .attr("y", function(d) {
+      var desired_y = y(d.y0)+6;
+      var minimum_y = label_y + minimum_label_y_spacing;
+      if(minimum_y > desired_y) {
+        desired_y = minimum_y;
+        label_y = label_y + minimum_label_y_spacing;
+      } else {
+        label_y = desired_y;
+      }
+      return desired_y;
+      });
+
+  label_y = 0;
+
+  svg.selectAll(".label.dn")
+    .sort(function(a,b) { return b.y1 - a.y1; })
+    .attr("y", function(d) {
+      var desired_y = y(d.y0)+6;
+      var minimum_y = label_y + minimum_label_y_spacing;
+      if(minimum_y > desired_y) {
+        desired_y = minimum_y;
+        label_y = label_y + minimum_label_y_spacing;
+      } else {
+        label_y = desired_y;
+      }
+      return desired_y;
+      });
+
+  var lines = svg.selectAll("line.connector.dp").data(data.diff_positive);
+
+  lines.enter().append("line").attr("class", "connector dp");
+
+  lines.exit().remove();
+
+  lines
+    .attr('x1', function(d) { return x(d.x-1); })
+    .attr('x2', function(d) { return x(d.x)+x.rangeBand(); })
+    .attr('y1', function(d) { return y(d.y0); })
+    .attr('y2', function(d) { return y(d.y0); });
+
+  lines = svg.selectAll("line.connector.dn").data(data.diff_negative);
+
+  lines.enter().append("line").attr("class", "connector dn");
+
+  lines.exit().remove();
+
+  lines
+    .attr('x1', function(d) { return x(d.x); })
+    .attr('x2', function(d) { return x(d.x+1)+x.rangeBand(); })
+    .attr('y1', function(d) { return y(d.y0); })
+    .attr('y2', function(d) { return y(d.y0); });
+    
+
+  // Add the other connecting lines
+  lines = svg.selectAll("line.connector.lefttodiff").data([1]);
+
+  lines.enter().append("line").attr("class", "connector lefttodiff");
+
+  lines.exit().remove();
+
+  lines
+    .attr('x1', function(d) { return x(1); })
+    .attr('x2', function(d) { return x(3)+x.rangeBand(); })
+    .attr('y1', function(d) { return y(a_negative_total + a_positive_total); })
+    .attr('y2', function(d) { return y(a_negative_total + a_positive_total); });
+
+  lines = svg.selectAll("line.connector.righttodiff").data([1]);
+
+  lines.enter().append("line").attr("class", "connector righttodiff");
+
+  lines.exit().remove();
+
+  lines
+    .attr('x1', function(d) { return x(number_of_columns-4); })
+    .attr('x2', function(d) { return x(number_of_columns-2)+x.rangeBand(); })
+    .attr('y1', function(d) { return y(b_negative_total + b_positive_total); })
+    .attr('y2', function(d) { return y(b_negative_total + b_positive_total); });
+
+  lines = svg.selectAll("line.connector.left").data([1]);
+
+  lines.enter().append("line").attr("class", "connector left");
+
+  lines.exit().remove();
+
+  lines
+    .attr('x1', function(d) { return x(0); })
+    .attr('x2', function(d) { return x(1)+x.rangeBand(); })
+    .attr('y1', function(d) { return y(a_negative_total); })
+    .attr('y2', function(d) { return y(a_negative_total); });
+
+
+  lines = svg.selectAll("line.connector.right").data([1]);
+
+  lines.enter().append("line").attr("class", "connector right");
+
+  lines.exit().remove();
+
+  lines
+    .attr('x1', function(d) { return x(number_of_columns-2); })
+    .attr('x2', function(d) { return x(number_of_columns-1)+x.rangeBand(); })
+    .attr('y1', function(d) { return y(b_negative_total); })
+    .attr('y2', function(d) { return y(b_negative_total); });
+
+  d3.select('#leftlabel')
+    .attr("x", x(2)/2);
+
+  d3.select('#rightlabel')
+    .attr("x", (x(number_of_columns-2)+width)/2);
+
+  d3.select('#decreaselabel')
+    .attr("x", x(Math.ceil((4+data.diff_negative.length)/2)))
+    .attr("y", y(a_negative_total + a_positive_total)-20);
+
+
+  d3.select('#increaselabel')
+    .attr("x", x(Math.ceil(((number_of_columns-4)+(number_of_columns-4-data.diff_negative.length))/2)))
+    .attr("y", y(b_negative_total + b_positive_total)-20);
+
+  svg.select("#backingleft")
+    .attr("x", 5)
+    .attr("width", x(2)+5)
+    .attr("y", 0)
+    .attr("height", height);
+
+  svg.select("#backingright")
+    .attr("x", x(number_of_columns-2)-5)
+    .attr("width", x(2)+5)
+    .attr("y", 0)
+    .attr("height", height);
+
+  svg.select("#backingdiff")
+    .attr("x", x(3)-5)
+    .attr("width", x(number_of_columns-3)-x(3)+5)
+    .attr("y", 0)
+    .attr("height", y(a_negative_total + a_positive_total + diff_negative_total)+50);
+
+
+}
+
+
+// Ok, lets go
+d3.tsv("data.tsv", reformat_tsv, data_loaded);
+
+  </script>
+</body>
+</html>
