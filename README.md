@@ -5,7 +5,7 @@ A simple script to draw flying brick charts:
 ![Example flying brick](example.tiff)
 
 
-Based on the excellent [d3](http://d3js.com) visualisation library.
+Based on the excellent [d3](http://d3js.org) visualisation library.
 
 &copy; 2015 Tom Counsell http://tom.counsell.org
 
