@@ -8,8 +8,13 @@ body {
 
   .axis path, .axis line {
     fill: none;
-    stroke: #000;
+    stroke: #6baed6;
+    stroke-width: 1px;
     shape-rendering: crispEdges;
+  }
+
+  .axis text {
+    fill: #6baed6;
   }
     
   rect.brick {
@@ -1020,8 +1025,8 @@ var a_positive_total = 0,
 var number_of_columns = 0;
 
 var margin = {top: 20, right: 20, bottom: 30, left: 50},
-    width = 1200 - margin.left - margin.right,
-    height = 800 - margin.top - margin.bottom;
+    width = window.innerWidth - margin.left - margin.right,
+    height = window.innerHeight - margin.top - margin.bottom;
 
 var x = d3.scale.ordinal()
     .rangeRoundBands([130, width-130], .1);
